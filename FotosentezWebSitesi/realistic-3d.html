@@ -1,0 +1,2177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerçekçi 3D Fotosentez Modelleri 🧬</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 50%, #e8f0e8 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            color: #2E7D32;
+        }
+
+        #container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+        }
+
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.95);
+            color: #2E7D32;
+            padding: 25px;
+            border-radius: 20px;
+            z-index: 100;
+            min-width: 350px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(76,175,80,0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 100;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-btn {
+            padding: 18px 28px;
+            background: linear-gradient(45deg, #2E7D32, #4CAF50);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .control-btn:hover::before {
+            left: 100%;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.6);
+        }
+
+        .control-btn.active {
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            animation: activeGlow 2s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(255, 107, 53, 0.8);
+        }
+
+        @keyframes activeGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(255, 107, 53, 0.8); }
+            50% { box-shadow: 0 0 50px rgba(255, 107, 53, 1); }
+        }
+
+        #molecule-detail {
+            position: absolute;
+            top: 50%;
+            right: 30px;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.95);
+            color: #2E7D32;
+            padding: 25px;
+            border-radius: 20px;
+            z-index: 100;
+            min-width: 300px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(76,175,80,0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .molecule-info {
+            position: absolute;
+            background: rgba(0,0,0,0.95);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 1000;
+            transform: translate(-50%, -100%);
+            opacity: 0;
+            transition: opacity 0.4s;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(76,175,80,0.5);
+        }
+
+        .molecule-info.show {
+            opacity: 1;
+        }
+
+        .info-item {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #4CAF50;
+            min-width: 120px;
+        }
+
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 50%, #e8f0e8 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.8s ease-out;
+        }
+
+        .loading-text {
+            color: #4CAF50;
+            font-size: 28px;
+            margin-bottom: 40px;
+            animation: loadingPulse 2s infinite;
+            text-align: center;
+        }
+
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        .loading-bar {
+            width: 400px;
+            height: 8px;
+            background: rgba(76,175,80,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A, #CDDC39);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading-progress::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.6),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .phase-indicator {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: linear-gradient(45deg, #2E7D32, #4CAF50);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 100;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            border: 2px solid rgba(139, 195, 74, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .phase-indicator:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.6);
+        }
+
+        .phase-explanation {
+            position: absolute;
+            top: 50%;
+            left: 30px;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.95);
+            color: #2E7D32;
+            padding: 25px;
+            border-radius: 20px;
+            z-index: 200;
+            max-width: 400px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(76,175,80,0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .phase-explanation.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .phase-title {
+            color: #4CAF50;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .phase-description {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .phase-process {
+            background: rgba(76,175,80,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+            margin-bottom: 15px;
+        }
+
+        .phase-molecules {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .molecule-badge {
+            background: linear-gradient(45deg, #2E7D32, #4CAF50);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .visual-hint {
+            position: absolute;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 150;
+            animation: hintPulse 2s ease-in-out infinite;
+            pointer-events: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        @keyframes hintPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #4CAF50;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(76,175,80,0.2);
+            transform: rotate(90deg);
+        }
+
+        .molecule-cards {
+            position: absolute;
+            top: 380px;
+            left: 20px;
+            width: 350px;
+            height: 280px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 20px;
+            z-index: 100;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(76,175,80,0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .cards-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(76,175,80,0.2);
+        }
+
+        .cards-title {
+            color: #2E7D32;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .cards-navigation {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: linear-gradient(45deg, #4CAF50, #66BB6A);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(76,175,80,0.3);
+        }
+
+        .nav-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(76,175,80,0.5);
+        }
+
+        .nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .cards-container {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .molecule-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e8f5e8 100%);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform: translateX(100%);
+            opacity: 0;
+            border: 1px solid rgba(76,175,80,0.2);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+        }
+
+        .molecule-card.active {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .molecule-card.prev {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .card-icon {
+            font-size: 28px;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, #4CAF50, #66BB6A);
+            border-radius: 50%;
+            color: white;
+            box-shadow: 0 3px 12px rgba(76,175,80,0.3);
+        }
+
+        .card-title {
+            color: #2E7D32;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .card-formula {
+            color: #1B5E20;
+            font-size: 14px;
+            font-family: monospace;
+            background: rgba(76,175,80,0.1);
+            padding: 4px 8px;
+            border-radius: 8px;
+            margin-top: 4px;
+        }
+
+        .card-description {
+            color: #2E7D32;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .card-properties {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .property-badge {
+            background: linear-gradient(45deg, #4CAF50, #66BB6A);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .card-indicators {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+        }
+
+        .indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(76,175,80,0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .indicator.active {
+            background: #4CAF50;
+            transform: scale(1.3);
+        }
+
+        .phase-equation {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.95);
+            color: #2E7D32;
+            padding: 20px 35px;
+            border-radius: 25px;
+            z-index: 100;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(76,175,80,0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 400px;
+            transition: all 0.5s ease;
+        }
+
+        .equation-title {
+            font-size: 14px;
+            color: #4CAF50;
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: normal;
+        }
+
+        .equation-formula {
+            font-size: 20px;
+            color: #1B5E20;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .equation-arrow {
+            color: #FF6B35;
+            font-size: 24px;
+            margin: 0 15px;
+            animation: arrowPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes arrowPulse {
+            0%, 100% { transform: scale(1); color: #FF6B35; }
+            50% { transform: scale(1.2); color: #FF8A65; }
+        }
+
+        .molecule-part {
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 0 2px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .molecule-part:hover {
+            background: rgba(76,175,80,0.2);
+            transform: scale(1.1);
+        }
+
+        .reactant {
+            color: #1976D2;
+        }
+
+        .product {
+            color: #388E3C;
+        }
+
+        .catalyst {
+            color: #F57C00;
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        .atom-legend {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(255,255,255,0.95);
+            color: #2E7D32;
+            padding: 20px;
+            border-radius: 15px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(76,175,80,0.3);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .atom-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        @media (max-width: 768px) {
+            #info-panel, #molecule-detail, .phase-explanation, .molecule-cards {
+                width: calc(100% - 40px);
+                position: relative;
+                margin: 20px;
+                transform: none;
+            }
+            
+            .phase-explanation {
+                top: auto;
+                left: auto;
+                max-width: none;
+            }
+            
+            .molecule-cards {
+                top: auto;
+                left: auto;
+                height: 260px;
+                order: 2;
+            }
+            
+            .phase-indicator {
+                font-size: 16px;
+                padding: 15px 20px;
+                top: 15px;
+                right: 15px;
+            }
+            
+            #controls {
+                flex-wrap: wrap;
+                max-width: calc(100% - 40px);
+                gap: 10px;
+            }
+            
+            .control-btn {
+                padding: 14px 20px;
+                font-size: 14px;
+            }
+            
+            .visual-hint {
+                font-size: 12px;
+                padding: 6px 12px;
+                max-width: 80%;
+                text-align: center;
+                left: 50% !important;
+                transform: translateX(-50%);
+            }
+            
+            .card-description {
+                font-size: 13px;
+            }
+            
+            .property-badge {
+                font-size: 11px;
+                padding: 3px 8px;
+            }
+            
+            .phase-equation {
+                position: relative;
+                top: 10px;
+                left: auto;
+                transform: none;
+                margin: 10px 20px;
+                min-width: auto;
+                width: calc(100% - 40px);
+                font-size: 14px;
+                padding: 15px 20px;
+            }
+            
+            .equation-formula {
+                font-size: 16px;
+            }
+            
+            .equation-arrow {
+                font-size: 20px;
+                margin: 0 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-text">🧬 Gerçekçi Molekül Yapıları Hazırlanıyor...<br>
+        <span style="font-size: 16px; opacity: 0.8;">Bilimsel verilerden detaylı modeller oluşturuluyor</span></div>
+        <div class="loading-bar">
+            <div class="loading-progress" id="loadingProgress"></div>
+        </div>
+    </div>
+
+    <div id="container">
+        <div class="phase-equation" id="phaseEquation">
+            <div class="equation-title" id="equationTitle">Işık Absorpsiyonu Denkemi</div>
+            <div class="equation-formula" id="equationFormula">
+                <span class="molecule-part reactant">Klorofil</span>
+                <span>+</span>
+                <span class="molecule-part reactant">hν</span>
+                <span class="equation-arrow">→</span>
+                <span class="molecule-part product">Klorofil*</span>
+                <span class="catalyst">(uyarılmış durum)</span>
+            </div>
+        </div>
+
+        <div id="info-panel">
+            <h3 style="color: #4CAF50; margin-bottom: 20px; font-size: 24px;">🌱 Gerçekçi 3D Fotosentez Modelleri</h3>
+            <div class="info-item">
+                <span class="info-label">Aktif Faz:</span>
+                <span id="current-phase">Hazırlanıyor...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Seçili Molekül:</span>
+                <span id="active-molecule">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Molekül Tipi:</span>
+                <span id="molecule-type">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Atom Sayısı:</span>
+                <span id="atom-count">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Enerji Seviyesi:</span>
+                <span id="energy-level">0%</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">ATP Üretimi:</span>
+                <span id="atp-count">0 ATP</span>
+            </div>
+        </div>
+
+        <div class="molecule-cards">
+            <div class="cards-header">
+                <div class="cards-title">🧬 Molekül Rehberi</div>
+                <div class="cards-navigation">
+                    <button class="nav-btn" id="prevCard" onclick="previousCard()">‹</button>
+                    <button class="nav-btn" id="nextCard" onclick="nextCard()">›</button>
+                </div>
+            </div>
+            <div class="cards-container" id="cardsContainer">
+                <!-- Kartlar JavaScript ile doldurulacak -->
+            </div>
+            <div class="card-indicators" id="cardIndicators">
+                <!-- Göstergeler JavaScript ile doldurulacak -->
+            </div>
+        </div>
+
+        <div class="phase-indicator" id="phaseIndicator" onclick="togglePhaseExplanation()">
+            📍 Işık Absorpsiyonu Fazı
+        </div>
+
+        <div class="phase-explanation" id="phaseExplanation">
+            <button class="close-btn" onclick="hidePhaseExplanation()">×</button>
+            <div class="phase-title" id="explanationTitle">
+                💡 <span>Işık Absorpsiyonu</span>
+            </div>
+            <div class="phase-description" id="explanationDescription">
+                Güneş ışığı klorofil molekülleri tarafından emilir. Bu enerji, fotosentez zincirini başlatır.
+            </div>
+            <div class="phase-process" id="explanationProcess">
+                <strong>Bu Fazda Neler Oluyor:</strong><br>
+                • Fotonlar (ışık tanecikleri) klorofile çarpıyor<br>
+                • Klorofil molekülleri enerjiyle titreşiyor<br>
+                • Elektronlar yüksek enerji seviyesine çıkıyor
+            </div>
+            <div class="phase-molecules" id="explanationMolecules">
+                <span class="molecule-badge">🌱 Klorofil</span>
+                <span class="molecule-badge">💡 Fotonlar</span>
+            </div>
+        </div>
+
+        <div id="molecule-detail" style="display: none;">
+            <h4 style="color: #4CAF50; margin-bottom: 15px;" id="detail-title">Molekül Detayı</h4>
+            <div id="detail-formula" style="font-size: 18px; margin-bottom: 10px; font-family: monospace;"></div>
+            <div id="detail-description" style="opacity: 0.9; line-height: 1.6;"></div>
+            <div id="detail-atoms" style="margin-top: 15px;"></div>
+        </div>
+
+        <div class="atom-legend">
+            <h4 style="color: #4CAF50; margin-bottom: 10px; font-size: 14px;">Atom Renk Kodları</h4>
+            <div class="legend-item">
+                <div class="atom-color" style="background: #FF0000;"></div>
+                <span>Oksijen (O)</span>
+            </div>
+            <div class="legend-item">
+                <div class="atom-color" style="background: #FFFFFF;"></div>
+                <span>Hidrojen (H)</span>
+            </div>
+            <div class="legend-item">
+                <div class="atom-color" style="background: #404040;"></div>
+                <span>Karbon (C)</span>
+            </div>
+            <div class="legend-item">
+                <div class="atom-color" style="background: #0000FF;"></div>
+                <span>Azot (N)</span>
+            </div>
+            <div class="legend-item">
+                <div class="atom-color" style="background: #FFA500;"></div>
+                <span>Fosfor (P)</span>
+            </div>
+            <div class="legend-item">
+                <div class="atom-color" style="background: #00FF00;"></div>
+                <span>Magnezyum (Mg)</span>
+            </div>
+        </div>
+
+        <div id="controls">
+            <button class="control-btn" id="playBtn">▶️ Başlat</button>
+            <button class="control-btn" id="pauseBtn">⏸️ Duraklat</button>
+            <button class="control-btn" id="resetBtn">🔄 Sıfırla</button>
+            <button class="control-btn" id="phaseBtn">⏭️ Sonraki Faz</button>
+            <button class="control-btn" id="cameraBtn">📷 Kamera</button>
+            <button class="control-btn" id="moleculeBtn">🧬 Molekül Detay</button>
+        </div>
+    </div>
+
+    <div class="molecule-info" id="moleculeTooltip"></div>
+    <div class="visual-hint" id="visualHint" style="display: none;"></div>
+
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let chloroplast, molecules = [];
+        let photons = [], electrons = [];
+        let isAnimating = false;
+        let currentPhase = 0;
+        let animationSpeed = 1;
+        let cameraAngle = 0;
+        let energyLevel = 0;
+        let atpCount = 0;
+        let selectedMolecule = null;
+
+        // Animation phases
+        const phases = [
+            "Işık Absorpsiyonu",
+            "Su Parçalanması", 
+            "Elektron Taşıma",
+            "ATP Sentezi",
+            "Calvin Döngüsü"
+        ];
+
+        // Phase explanations
+        const phaseExplanations = {
+            0: {
+                icon: "💡",
+                title: "Işık Absorpsiyonu (Light Absorption)",
+                description: "Fotosentezin ilk adımı! Güneş ışığı klorofil molekülleri tarafından emilir ve elektron enerji kazanır.",
+                process: "• Sarı fotonlar (ışık tanecikleri) yukarıdan aşağı iniyor\n• Yeşil klorofil molekülleri ışığı yakalarken parıldarken\n• Elektronlar yüksek enerji seviyesine çıkıp hareket ediyor",
+                molecules: [{name: "🌱 Klorofil a", color: "#4CAF50"}, {name: "💡 Fotonlar", color: "#FFEB3B"}],
+                hint: "Sarı fotonları takip edin! ☀️"
+            },
+            1: {
+                icon: "💧",
+                title: "Su Parçalanması (Water Splitting)",
+                description: "Klorofilden gelen yüksek enerji su moleküllerini parçalar ve oksijen açığa çıkar.",
+                process: "• Su molekülleri (H₂O) titreşerek büyüyor\n• Moleküller parçalanıp hidrojen ve oksijen oluşuyor\n• Oksijen gazı atmosfere salınıyor (nefes alırız!)",
+                molecules: [{name: "💧 Su (H₂O)", color: "#2196F3"}, {name: "🫁 Oksijen (O₂)", color: "#FF5722"}],
+                hint: "Su moleküllerinin titreşimini gözleyin! 💦"
+            },
+            2: {
+                icon: "⚡",
+                title: "Elektron Taşıma (Electron Transport)",
+                description: "Elektronlar özel proteinler aracılığıyla taşınır ve enerji ATP yapımında kullanılır.",
+                process: "• Mavi elektronlar dairesel yörüngede hareket ediyor\n• Elektron taşıma zinciri boyunca enerji aktarıyor\n• Her elektron geçişinde enerji seviyesi artıyor",
+                molecules: [{name: "⚡ Elektronlar", color: "#00BCD4"}, {name: "🔋 Enerji", color: "#FF9800"}],
+                hint: "Mavi elektronların yörüngesini izleyin! ⚡"
+            },
+            3: {
+                icon: "🔋",
+                title: "ATP Sentezi (ATP Synthesis)",
+                description: "Elektron enerjisi kullanılarak hücrenin enerji para birimi ATP üretilir.",
+                process: "• ATP molekülleri dönerek enerji depoluyor\n• ADP + P → ATP dönüşümü gerçekleşiyor\n• Hücrenin kullanacağı enerji hazır!",
+                molecules: [{name: "⚡ ATP", color: "#4CAF50"}, {name: "🔋 ADP", color: "#FF5722"}],
+                hint: "ATP moleküllerinin dönüşünü gözleyin! 🔄"
+            },
+            4: {
+                icon: "🔄",
+                title: "Calvin Döngüsü (Calvin Cycle)",
+                description: "CO₂ ve ATP kullanılarak glukoz (şeker) üretilir. Bitkinin besinini yapma süreci!",
+                process: "• CO₂ molekülleri glukoza doğru hareket ediyor\n• ATP enerjisi kullanılarak şeker sentezleniyor\n• Glukoz bitkinin besin kaynağı oluyor",
+                molecules: [{name: "🌬️ CO₂", color: "#607D8B"}, {name: "🍯 Glukoz", color: "#FFC107"}],
+                hint: "CO₂'nin glukoza dönüşümünü takip edin! 🍃"
+            }
+        };
+
+        // Atom colors (CPK coloring scheme)
+        const atomColors = {
+            H: 0xFFFFFF,  // Hydrogen - White
+            C: 0x404040,  // Carbon - Dark Gray
+            N: 0x0000FF,  // Nitrogen - Blue
+            O: 0xFF0000,  // Oxygen - Red
+            P: 0xFFA500,  // Phosphorus - Orange
+            S: 0xFFFF00,  // Sulfur - Yellow
+            Mg: 0x00FF00  // Magnesium - Green
+        };
+
+        // Atom sizes (van der Waals radii scaled)
+        const atomSizes = {
+            H: 0.3,
+            C: 0.4,
+            N: 0.35,
+            O: 0.35,
+            P: 0.5,
+            S: 0.45,
+            Mg: 0.4
+        };
+
+        // Molecular data (real atomic coordinates)
+        const moleculeData = {
+            water: {
+                name: "Su Molekülü",
+                formula: "H₂O",
+                description: "Su molekülü, fotosentezde hem reaktan hem de ürün olarak rol oynar. Işığa bağlı reaksiyonlarda parçalanarak oksijen üretir.",
+                atoms: [
+                    { element: 'O', position: [0, 0, 0] },
+                    { element: 'H', position: [0.76, 0.59, 0] },
+                    { element: 'H', position: [-0.76, 0.59, 0] }
+                ],
+                bonds: [
+                    { from: 0, to: 1 },
+                    { from: 0, to: 2 }
+                ]
+            },
+            co2: {
+                name: "Karbondioksit",
+                formula: "CO₂",
+                description: "Atmosferden alınan karbondioksit, Calvin döngüsünde karbon fiksasyonu için kullanılır. Doğrusal yapıya sahiptir.",
+                atoms: [
+                    { element: 'C', position: [0, 0, 0] },
+                    { element: 'O', position: [-1.16, 0, 0] },
+                    { element: 'O', position: [1.16, 0, 0] }
+                ],
+                bonds: [
+                    { from: 0, to: 1 },
+                    { from: 0, to: 2 }
+                ]
+            },
+            oxygen: {
+                name: "Oksijen Molekülü",
+                formula: "O₂",
+                description: "Fotosentezin ana ürünlerinden biri olan oksijen molekülü. Tüm aerobik canlılar için hayati önemdedir.",
+                atoms: [
+                    { element: 'O', position: [-0.6, 0, 0] },
+                    { element: 'O', position: [0.6, 0, 0] }
+                ],
+                bonds: [
+                    { from: 0, to: 1 }
+                ]
+            },
+            atp: {
+                name: "Adenin Trifosfat",
+                formula: "C₁₀H₁₆N₅O₁₃P₃",
+                description: "Hücrenin enerji para birimi ATP. Adenin, riboz ve 3 fosfat grubundan oluşur.",
+                atoms: [
+                    // Adenin bazı
+                    { element: 'N', position: [0, 0, 0] },      // 0
+                    { element: 'C', position: [1.3, 0.75, 0] }, // 1
+                    { element: 'N', position: [2.6, 0, 0] },    // 2
+                    { element: 'C', position: [2.6, -1.5, 0] }, // 3
+                    { element: 'C', position: [1.3, -2.25, 0] }, // 4
+                    { element: 'C', position: [0, -1.5, 0] },   // 5
+                    { element: 'N', position: [3.9, -2.25, 0] }, // 6
+                    { element: 'C', position: [5.2, -1.5, 0] }, // 7
+                    { element: 'N', position: [5.2, 0, 0] },    // 8
+                    
+                    // Riboz şekeri
+                    { element: 'C', position: [0, -3, 0] },     // 9
+                    { element: 'C', position: [1, -4, 0] },     // 10
+                    { element: 'C', position: [0, -5, 0] },     // 11
+                    { element: 'C', position: [-1, -4, 0] },    // 12
+                    { element: 'O', position: [-1, -3, 0] },    // 13
+                    { element: 'O', position: [1, -5.5, 0] },   // 14
+                    
+                    // Fosfat grupları
+                    { element: 'P', position: [-2, -5, 0] },    // 15 (α-fosfat)
+                    { element: 'O', position: [-3, -5, 0] },    // 16
+                    { element: 'O', position: [-2, -6, 0] },    // 17
+                    { element: 'O', position: [-2, -4, 0] },    // 18
+                    { element: 'P', position: [-4, -5, 0] },    // 19 (β-fosfat)
+                    { element: 'O', position: [-5, -5, 0] },    // 20
+                    { element: 'O', position: [-4, -6, 0] },    // 21
+                    { element: 'P', position: [-6, -5, 0] },    // 22 (γ-fosfat)
+                    { element: 'O', position: [-7, -5, 0] },    // 23
+                    { element: 'O', position: [-6, -6, 0] },    // 24
+                    { element: 'O', position: [-6, -4, 0] },    // 25
+                ],
+                bonds: [
+                    // Adenin halka bağları
+                    { from: 0, to: 1 }, { from: 1, to: 2 }, { from: 2, to: 3 },
+                    { from: 3, to: 4 }, { from: 4, to: 5 }, { from: 5, to: 0 },
+                    { from: 3, to: 6 }, { from: 6, to: 7 }, { from: 7, to: 8 }, { from: 8, to: 2 },
+                    // Riboz bağları
+                    { from: 9, to: 10 }, { from: 10, to: 11 }, { from: 11, to: 12 }, 
+                    { from: 12, to: 13 }, { from: 13, to: 9 },
+                    // Fosfat bağları
+                    { from: 14, to: 15 }, { from: 15, to: 16 }, { from: 15, to: 17 }, 
+                    { from: 15, to: 18 }, { from: 18, to: 19 }, { from: 19, to: 20 }, 
+                    { from: 19, to: 21 }, { from: 19, to: 22 }, { from: 22, to: 23 }, 
+                    { from: 22, to: 24 }, { from: 22, to: 25 }
+                ]
+            },
+            chlorophyll: {
+                name: "Klorofil a",
+                formula: "C₅₅H₇₂MgN₄O₅",
+                description: "Fotosentezin kalbi olan klorofil a molekülü. Merkezi magnezyum atomu ve porfirin halkası ile ışığı absorbe eder.",
+                atoms: [
+                    // Porfirin halka merkezi - Magnezyum
+                    { element: 'Mg', position: [0, 0, 0] },     // 0
+                    
+                    // Porfirin halkası (basitleştirilmiş)
+                    { element: 'N', position: [1.5, 0, 0] },    // 1
+                    { element: 'N', position: [0, 1.5, 0] },    // 2
+                    { element: 'N', position: [-1.5, 0, 0] },   // 3
+                    { element: 'N', position: [0, -1.5, 0] },   // 4
+                    
+                    // Pirol halkaları
+                    { element: 'C', position: [2.5, 0.5, 0] },  // 5
+                    { element: 'C', position: [2.5, -0.5, 0] }, // 6
+                    { element: 'C', position: [0.5, 2.5, 0] },  // 7
+                    { element: 'C', position: [-0.5, 2.5, 0] }, // 8
+                    { element: 'C', position: [-2.5, 0.5, 0] }, // 9
+                    { element: 'C', position: [-2.5, -0.5, 0] }, // 10
+                    { element: 'C', position: [0.5, -2.5, 0] }, // 11
+                    { element: 'C', position: [-0.5, -2.5, 0] }, // 12
+                    
+                    // Fitol kuyruğu (basitleştirilmiş)
+                    { element: 'C', position: [3.5, 0, 0] },    // 13
+                    { element: 'C', position: [4.5, 0.5, 0] },  // 14
+                    { element: 'C', position: [5.5, 0, 0] },    // 15
+                    { element: 'C', position: [6.5, 0.5, 0] },  // 16
+                ]
+            },
+            glucose: {
+                name: "Glukoz",
+                formula: "C₆H₁₂O₆",
+                description: "Fotosentezin ana ürünü olan glukoz. Bitkilerin temel enerji kaynağı ve yapısal maddesidir.",
+                atoms: [
+                    // Halka yapısı (α-D-glukoz)
+                    { element: 'C', position: [0, 0, 0] },      // 0 (C1)
+                    { element: 'C', position: [1.5, 0.5, 0] },  // 1 (C2)
+                    { element: 'C', position: [1.5, 2, 0] },    // 2 (C3)
+                    { element: 'C', position: [0, 2.5, 0] },    // 3 (C4)
+                    { element: 'C', position: [-1.5, 2, 0] },   // 4 (C5)
+                    { element: 'O', position: [-1.5, 0.5, 0] }, // 5 (O5)
+                    { element: 'C', position: [-3, 2.5, 0] },   // 6 (C6)
+                    
+                    // Hidroksil grupları
+                    { element: 'O', position: [0, -1.5, 0] },   // 7 (O1)
+                    { element: 'O', position: [3, 0, 0] },      // 8 (O2)
+                    { element: 'O', position: [3, 2.5, 0] },    // 9 (O3)
+                    { element: 'O', position: [0, 4, 0] },      // 10 (O4)
+                    { element: 'O', position: [-3, 4, 0] },     // 11 (O6)
+                    
+                    // Hidrojenler (sadece önemli olanlar)
+                    { element: 'H', position: [0, -2.5, 0] },   // 12
+                    { element: 'H', position: [4, 0, 0] },      // 13
+                    { element: 'H', position: [4, 3, 0] },      // 14
+                    { element: 'H', position: [0, 5, 0] },      // 15
+                    { element: 'H', position: [-3, 5, 0] },     // 16
+                ],
+                bonds: [
+                    // Halka bağları
+                    { from: 0, to: 1 }, { from: 1, to: 2 }, { from: 2, to: 3 },
+                    { from: 3, to: 4 }, { from: 4, to: 5 }, { from: 5, to: 0 },
+                    { from: 4, to: 6 },
+                    // OH grupları
+                    { from: 0, to: 7 }, { from: 1, to: 8 }, { from: 2, to: 9 },
+                    { from: 3, to: 10 }, { from: 6, to: 11 },
+                    // H bağları
+                    { from: 7, to: 12 }, { from: 8, to: 13 }, { from: 9, to: 14 },
+                    { from: 10, to: 15 }, { from: 11, to: 16 }
+                ]
+            }
+        };
+
+        // Faz denklemleri verileri (10. sınıf biyoloji kitabından)
+        const phaseEquations = {
+            0: {
+                title: "Işığa Bağlı Reaksiyonlar - Fotosistem II",
+                formula: [
+                    {text: "2H₂O", type: "reactant"},
+                    {text: "+", type: "operator"},
+                    {text: "ışık", type: "reactant"},
+                    {text: "→", type: "arrow"},
+                    {text: "4H⁺", type: "product"},
+                    {text: "+", type: "operator"},
+                    {text: "4e⁻", type: "product"},
+                    {text: "+", type: "operator"},
+                    {text: "O₂", type: "product"}
+                ]
+            },
+            1: {
+                title: "Işığa Bağlı Reaksiyonlar - NADPH Üretimi",
+                formula: [
+                    {text: "NADP⁺", type: "reactant"},
+                    {text: "+", type: "operator"},
+                    {text: "2H⁺", type: "reactant"},
+                    {text: "+", type: "operator"},
+                    {text: "2e⁻", type: "reactant"},
+                    {text: "→", type: "arrow"},
+                    {text: "NADPH", type: "product"},
+                    {text: "+", type: "operator"},
+                    {text: "H⁺", type: "product"}
+                ]
+            },
+            2: {
+                title: "ATP Sentezi (Fotofosforilasyon)",
+                formula: [
+                    {text: "ADP", type: "reactant"},
+                    {text: "+", type: "operator"},
+                    {text: "Pi", type: "reactant"},
+                    {text: "+", type: "operator"},
+                    {text: "enerji", type: "reactant"},
+                    {text: "→", type: "arrow"},
+                    {text: "ATP", type: "product"}
+                ]
+            },
+            3: {
+                title: "Calvin Döngüsü - Karbon Fiksasyonu",
+                formula: [
+                    {text: "6CO₂", type: "reactant"},
+                    {text: "+", type: "operator"},
+                    {text: "6RuBP", type: "reactant"},
+                    {text: "→", type: "arrow"},
+                    {text: "12PGA", type: "product"},
+                    {text: "RuBisCO", type: "catalyst"}
+                ]
+            },
+            4: {
+                title: "Genel Fotosentez Denklemi",
+                formula: [
+                    {text: "6CO₂", type: "reactant"},
+                    {text: "+", type: "operator"},
+                    {text: "6H₂O", type: "reactant"},
+                    {text: "+", type: "operator"},
+                    {text: "ışık enerjisi", type: "reactant"},
+                    {text: "→", type: "arrow"},
+                    {text: "C₆H₁₂O₆", type: "product"},
+                    {text: "+", type: "operator"},
+                    {text: "6O₂", type: "product"},
+                    {text: "+", type: "operator"},
+                    {text: "6H₂O", type: "product"}
+                ]
+            }
+        };
+
+        // Molekül bilgi kartları verileri
+        const moleculeCards = [
+            {
+                icon: "💧",
+                name: "Su Molekülü",
+                formula: "H₂O",
+                description: "Fotosentezin temel reaktanı. Işığa bağlı reaksiyonlarda parçalanarak oksijen üretir ve proton sağlar.",
+                properties: ["Polar", "Hidrojen Bağı", "104.5° Açı"]
+            },
+            {
+                icon: "🌬️",
+                name: "Karbondioksit",
+                formula: "CO₂",
+                description: "Atmosferden alınan CO₂, Calvin döngüsünde karbon fiksasyonu için kullanılır. Doğrusal yapıya sahiptir.",
+                properties: ["Doğrusal", "Apolar", "180° Açı"]
+            },
+            {
+                icon: "🫁",
+                name: "Oksijen Molekülü",
+                formula: "O₂",
+                description: "Su parçalanmasından oluşan yan ürün. Tüm aerobik canlılar için hayati önemdedir.",
+                properties: ["Paramanyetik", "İkili Bağ", "Radikal"]
+            },
+            {
+                icon: "⚡",
+                name: "ATP (Adenozin Trifosfat)",
+                formula: "C₁₀H₁₆N₅O₁₃P₃",
+                description: "Hücrenin enerji para birimi. Adenin, riboz ve 3 fosfat grubundan oluşur.",
+                properties: ["Yüksek Enerji", "3 Fosfat", "Adenin Bazı"]
+            },
+            {
+                icon: "🌱",
+                name: "Klorofil a",
+                formula: "C₅₅H₇₂MgN₄O₅",
+                description: "Fotosentezin kalbi. Merkezi magnezyum atomu ve porfirin halkası ile ışığı absorbe eder.",
+                properties: ["Porfirin Halka", "Mg Merkezi", "Fitol Kuyruğu"]
+            },
+            {
+                icon: "🍯",
+                name: "Glukoz",
+                formula: "C₆H₁₂O₆",
+                description: "Fotosentezin ana ürünü. Bitkilerin temel enerji kaynağı ve yapısal maddesi.",
+                properties: ["Halka Yapısı", "6 Karbon", "Monosakarit"]
+            },
+            {
+                icon: "💡",
+                name: "Fotonlar",
+                formula: "hν (E = hν)",
+                description: "İşık tanecikleri. Klorofil tarafından emilerek fotosentezi başlatan enerji sağlar.",
+                properties: ["Kütlesiz", "Enerji Paketi", "Dalga-Parçacık"]
+            },
+            {
+                icon: "⚡",
+                name: "Elektronlar",
+                formula: "e⁻",
+                description: "Yüksek enerjili elektronlar, elektron taşıma zincirinde ATP sentezi için enerji taşır.",
+                properties: ["Negatif Yüklü", "Yörünge Hareketi", "Enerji Taşıyıcı"]
+            }
+        ];
+
+        // Kart kontrol değişkenleri
+        let currentCardIndex = 0;
+        let cardChangeInterval;
+
+        // Initialize everything
+        window.addEventListener('load', function() {
+            simulateLoading();
+        });
+
+        function simulateLoading() {
+            const progress = document.getElementById('loadingProgress');
+            let width = 0;
+            
+            const interval = setInterval(() => {
+                width += Math.random() * 10 + 2;
+                if (width >= 100) {
+                    width = 100;
+                    progress.style.width = width + '%';
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('loadingScreen').style.display = 'none';
+                            init3DScene();
+                        }, 800);
+                    }, 1000);
+                    clearInterval(interval);
+                } else {
+                    progress.style.width = width + '%';
+                }
+            }, 150);
+        }
+
+        function init3DScene() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8f9fa);
+            scene.fog = new THREE.Fog(0xf1f3f4, 50, 200);
+
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 15, 25);
+
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.maxDistance = 100;
+            controls.minDistance = 10;
+
+            // Lighting
+            setupAdvancedLighting();
+
+            // Create realistic molecules
+            createRealisticMolecules();
+            createChloroplastStructure();
+            setupEventListeners();
+
+            // Start render loop
+            animate();
+            updatePhaseInfo();
+            updatePhaseExplanation();
+            updatePhaseEquation();
+            
+            // Initialize molecule cards
+            initializeMoleculeCards();
+        }
+
+        function setupAdvancedLighting() {
+            // Ambient light
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+
+            // Main directional light (sun)
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            sunLight.position.set(30, 30, 20);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 4096;
+            sunLight.shadow.mapSize.height = 4096;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 200;
+            sunLight.shadow.camera.left = -50;
+            sunLight.shadow.camera.right = 50;
+            sunLight.shadow.camera.top = 50;
+            sunLight.shadow.camera.bottom = -50;
+            scene.add(sunLight);
+
+            // Rim lighting
+            const rimLight1 = new THREE.DirectionalLight(0x66ff66, 0.6);
+            rimLight1.position.set(-20, 10, -20);
+            scene.add(rimLight1);
+
+            const rimLight2 = new THREE.DirectionalLight(0x66ccff, 0.4);
+            rimLight2.position.set(20, -10, 20);
+            scene.add(rimLight2);
+
+            // Point lights for molecular illumination
+            const molecularLight = new THREE.PointLight(0x66ff88, 1, 50);
+            molecularLight.position.set(0, 10, 0);
+            scene.add(molecularLight);
+        }
+
+        function createRealisticMolecules() {
+            const moleculeTypes = ['water', 'co2', 'oxygen', 'atp', 'chlorophyll', 'glucose'];
+            const positions = [
+                [10, 5, 10], [-10, 8, -5], [15, -5, 8], 
+                [-8, 10, 12], [20, 0, -10], [-15, -8, 15]
+            ];
+
+            moleculeTypes.forEach((type, index) => {
+                const moleculeGroup = createMoleculeFromData(moleculeData[type]);
+                moleculeGroup.position.set(...positions[index]);
+                moleculeGroup.userData = {
+                    type: type,
+                    data: moleculeData[type],
+                    originalPosition: new THREE.Vector3(...positions[index]),
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.1,
+                        (Math.random() - 0.5) * 0.1,
+                        (Math.random() - 0.5) * 0.1
+                    )
+                };
+                
+                scene.add(moleculeGroup);
+                molecules.push(moleculeGroup);
+            });
+        }
+
+        function createMoleculeFromData(data) {
+            const group = new THREE.Group();
+            const atoms = [];
+            const bonds = [];
+
+            // Create atoms
+            data.atoms.forEach((atomData, index) => {
+                const element = atomData.element;
+                const position = new THREE.Vector3(...atomData.position);
+                
+                const atomGeometry = new THREE.SphereGeometry(atomSizes[element], 16, 16);
+                const atomMaterial = new THREE.MeshPhongMaterial({ 
+                    color: atomColors[element],
+                    shininess: 80,
+                    specular: 0x222222,
+                    emissive: new THREE.Color(atomColors[element]).multiplyScalar(0.1)
+                });
+                
+                const atom = new THREE.Mesh(atomGeometry, atomMaterial);
+                atom.position.copy(position);
+                atom.castShadow = true;
+                atom.receiveShadow = true;
+                
+                // Add subtle glow effect
+                const glowGeometry = new THREE.SphereGeometry(atomSizes[element] * 1.2, 8, 8);
+                const glowMaterial = new THREE.MeshBasicMaterial({
+                    color: atomColors[element],
+                    transparent: true,
+                    opacity: 0.2
+                });
+                const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+                glow.position.copy(position);
+                
+                group.add(atom);
+                group.add(glow);
+                atoms.push(atom);
+            });
+
+            // Create bonds
+            if (data.bonds) {
+                data.bonds.forEach(bondData => {
+                    const atom1 = atoms[bondData.from];
+                    const atom2 = atoms[bondData.to];
+                    
+                    const distance = atom1.position.distanceTo(atom2.position);
+                    const bondGeometry = new THREE.CylinderGeometry(0.05, 0.05, distance, 8);
+                    const bondMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0xcccccc,
+                        shininess: 30
+                    });
+                    
+                    const bond = new THREE.Mesh(bondGeometry, bondMaterial);
+                    
+                    // Position and orient the bond
+                    const midpoint = new THREE.Vector3().addVectors(atom1.position, atom2.position).multiplyScalar(0.5);
+                    bond.position.copy(midpoint);
+                    
+                    const direction = new THREE.Vector3().subVectors(atom2.position, atom1.position).normalize();
+                    const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+                    bond.setRotationFromQuaternion(quaternion);
+                    
+                    bond.castShadow = true;
+                    bond.receiveShadow = true;
+                    group.add(bond);
+                });
+            }
+
+            return group;
+        }
+
+        function createChloroplastStructure() {
+            // Outer envelope - Daha yeşil ve görünür
+            const envelopeGeometry = new THREE.SphereGeometry(12, 32, 16);
+            envelopeGeometry.scale(1.5, 0.8, 1);
+            const envelopeMaterial = new THREE.MeshPhongMaterial({
+                color: 0x388E3C,
+                transparent: true,
+                opacity: 0.6,
+                side: THREE.DoubleSide,
+                shininess: 30
+            });
+            const envelope = new THREE.Mesh(envelopeGeometry, envelopeMaterial);
+            envelope.castShadow = true;
+            envelope.receiveShadow = true;
+            scene.add(envelope);
+
+            // Inner stroma - Daha koyu ve belirgin yeşil
+            const stromaGeometry = new THREE.SphereGeometry(11, 32, 16);
+            stromaGeometry.scale(1.4, 0.75, 0.95);
+            const stromaMaterial = new THREE.MeshPhongMaterial({
+                color: 0x2E7D32,
+                transparent: true,
+                opacity: 0.8,
+                emissive: 0x1B5E20,
+                shininess: 60
+            });
+            chloroplast = new THREE.Mesh(stromaGeometry, stromaMaterial);
+            chloroplast.castShadow = true;
+            chloroplast.receiveShadow = true;
+            scene.add(chloroplast);
+
+            // Thylakoid membranes (grana)
+            for (let i = 0; i < 8; i++) {
+                const granaGroup = new THREE.Group();
+                
+                for (let j = 0; j < 6; j++) {
+                    const thylakoidGeometry = new THREE.CylinderGeometry(1.5, 1.5, 0.2, 16);
+                    const thylakoidMaterial = new THREE.MeshPhongMaterial({
+                        color: 0x4CAF50,
+                        shininess: 80,
+                        emissive: 0x2E7D32,
+                        emissiveIntensity: 0.3
+                    });
+                    
+                    const thylakoid = new THREE.Mesh(thylakoidGeometry, thylakoidMaterial);
+                    thylakoid.position.y = j * 0.3 - 0.9;
+                    thylakoid.castShadow = true;
+                    thylakoid.receiveShadow = true;
+                    granaGroup.add(thylakoid);
+                }
+                
+                granaGroup.position.set(
+                    (Math.random() - 0.5) * 15,
+                    (Math.random() - 0.5) * 6,
+                    (Math.random() - 0.5) * 8
+                );
+                granaGroup.rotation.x = Math.random() * Math.PI;
+                granaGroup.rotation.z = Math.random() * Math.PI;
+                
+                scene.add(granaGroup);
+            }
+        }
+
+        function setupEventListeners() {
+            // Control buttons
+            document.getElementById('playBtn').addEventListener('click', startAnimation);
+            document.getElementById('pauseBtn').addEventListener('click', pauseAnimation);
+            document.getElementById('resetBtn').addEventListener('click', resetAnimation);
+            document.getElementById('phaseBtn').addEventListener('click', nextPhase);
+            document.getElementById('cameraBtn').addEventListener('click', switchCamera);
+            document.getElementById('moleculeBtn').addEventListener('click', toggleMoleculeDetail);
+
+            // Mouse interaction
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+            renderer.domElement.addEventListener('click', onMouseClick);
+            
+            // Window resize
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function startAnimation() {
+            isAnimating = true;
+            document.getElementById('playBtn').classList.add('active');
+            document.getElementById('pauseBtn').classList.remove('active');
+            
+            startPhaseAnimation();
+        }
+
+        function pauseAnimation() {
+            isAnimating = false;
+            document.getElementById('playBtn').classList.remove('active');
+            document.getElementById('pauseBtn').classList.add('active');
+        }
+
+        function resetAnimation() {
+            isAnimating = false;
+            currentPhase = 0;
+            energyLevel = 0;
+            atpCount = 0;
+            
+            // Reset molecule positions
+            molecules.forEach(molecule => {
+                molecule.position.copy(molecule.userData.originalPosition);
+                molecule.rotation.set(0, 0, 0);
+            });
+
+            // Clear particles
+            photons.forEach(photon => scene.remove(photon));
+            electrons.forEach(electron => scene.remove(electron));
+            photons = [];
+            electrons = [];
+
+            // Reset UI
+            document.getElementById('playBtn').classList.remove('active');
+            document.getElementById('pauseBtn').classList.remove('active');
+            hidePhaseExplanation();
+            
+            updatePhaseInfo();
+            updatePhaseExplanation();
+            updatePhaseEquation();
+        }
+
+        function nextPhase() {
+            currentPhase = (currentPhase + 1) % phases.length;
+            updatePhaseInfo();
+            updatePhaseExplanation();
+            updatePhaseEquation();
+            
+            if (isAnimating) {
+                startPhaseAnimation();
+            }
+        }
+
+        function togglePhaseExplanation() {
+            const panel = document.getElementById('phaseExplanation');
+            if (panel.classList.contains('show')) {
+                hidePhaseExplanation();
+            } else {
+                showPhaseExplanation();
+            }
+        }
+
+        function showPhaseExplanation() {
+            updatePhaseExplanation();
+            document.getElementById('phaseExplanation').classList.add('show');
+        }
+
+        function hidePhaseExplanation() {
+            document.getElementById('phaseExplanation').classList.remove('show');
+        }
+
+        function updatePhaseExplanation() {
+            const explanation = phaseExplanations[currentPhase];
+            if (explanation) {
+                document.getElementById('explanationTitle').innerHTML = 
+                    `${explanation.icon} <span>${explanation.title}</span>`;
+                document.getElementById('explanationDescription').textContent = explanation.description;
+                document.getElementById('explanationProcess').innerHTML = 
+                    `<strong>Bu Fazda Neler Oluyor:</strong><br>${explanation.process.replace(/\n/g, '<br>')}`;
+                
+                const moleculesContainer = document.getElementById('explanationMolecules');
+                moleculesContainer.innerHTML = '';
+                explanation.molecules.forEach(molecule => {
+                    const badge = document.createElement('span');
+                    badge.className = 'molecule-badge';
+                    badge.style.background = `linear-gradient(45deg, ${molecule.color}, ${molecule.color}aa)`;
+                    badge.textContent = molecule.name;
+                    moleculesContainer.appendChild(badge);
+                });
+            }
+        }
+
+        function updatePhaseEquation() {
+            const equation = phaseEquations[currentPhase];
+            if (equation) {
+                document.getElementById('equationTitle').textContent = equation.title;
+                
+                const formulaContainer = document.getElementById('equationFormula');
+                formulaContainer.innerHTML = '';
+                
+                equation.formula.forEach(part => {
+                    const span = document.createElement('span');
+                    
+                    if (part.type === 'arrow') {
+                        span.className = 'equation-arrow';
+                    } else if (part.type === 'operator') {
+                        span.style.margin = '0 8px';
+                        span.style.color = '#666';
+                    } else {
+                        span.className = `molecule-part ${part.type}`;
+                    }
+                    
+                    span.textContent = part.text;
+                    formulaContainer.appendChild(span);
+                });
+            }
+        }
+
+        function showVisualHint(message, x, y) {
+            const hint = document.getElementById('visualHint');
+            hint.textContent = message;
+            hint.style.left = x + 'px';
+            hint.style.top = y + 'px';
+            hint.style.display = 'block';
+            
+            setTimeout(() => {
+                hint.style.display = 'none';
+            }, 3000);
+        }
+
+        // Molekül kartları fonksiyonları
+        function initializeMoleculeCards() {
+            const container = document.getElementById('cardsContainer');
+            const indicators = document.getElementById('cardIndicators');
+            
+            // Kartları oluştur
+            moleculeCards.forEach((card, index) => {
+                const cardElement = createMoleculeCard(card, index);
+                container.appendChild(cardElement);
+                
+                // Gösterge oluştur
+                const indicator = document.createElement('div');
+                indicator.className = `indicator ${index === 0 ? 'active' : ''}`;
+                indicator.onclick = () => showCard(index);
+                indicators.appendChild(indicator);
+            });
+            
+            // İlk kartı göster
+            showCard(0);
+            
+            // Otomatik geçiş başlat (5 saniyede bir)
+            startAutoCardChange();
+        }
+
+        function createMoleculeCard(card, index) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = `molecule-card ${index === 0 ? 'active' : ''}`;
+            cardDiv.id = `card-${index}`;
+            
+            cardDiv.innerHTML = `
+                <div class="card-header">
+                    <div class="card-icon">${card.icon}</div>
+                    <div>
+                        <div class="card-title">${card.name}</div>
+                        <div class="card-formula">${card.formula}</div>
+                    </div>
+                </div>
+                <div class="card-description">${card.description}</div>
+                <div class="card-properties">
+                    ${card.properties.map(prop => `<span class="property-badge">${prop}</span>`).join('')}
+                </div>
+            `;
+            
+            return cardDiv;
+        }
+
+        function showCard(index) {
+            // Mevcut kartı gizle
+            const currentCard = document.querySelector('.molecule-card.active');
+            if (currentCard) {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('prev');
+            }
+            
+            // Yeni kartı göster
+            setTimeout(() => {
+                const newCard = document.getElementById(`card-${index}`);
+                if (newCard) {
+                    // Tüm kartları sıfırla
+                    document.querySelectorAll('.molecule-card').forEach(card => {
+                        card.classList.remove('active', 'prev');
+                    });
+                    
+                    newCard.classList.add('active');
+                }
+            }, 200);
+            
+            // Göstergeleri güncelle
+            document.querySelectorAll('.indicator').forEach((ind, i) => {
+                ind.classList.toggle('active', i === index);
+            });
+            
+            // Navigasyon butonlarını güncelle
+            document.getElementById('prevCard').disabled = index === 0;
+            document.getElementById('nextCard').disabled = index === moleculeCards.length - 1;
+            
+            currentCardIndex = index;
+        }
+
+        function nextCard() {
+            if (currentCardIndex < moleculeCards.length - 1) {
+                showCard(currentCardIndex + 1);
+                resetAutoCardChange();
+            }
+        }
+
+        function previousCard() {
+            if (currentCardIndex > 0) {
+                showCard(currentCardIndex - 1);
+                resetAutoCardChange();
+            }
+        }
+
+        function startAutoCardChange() {
+            cardChangeInterval = setInterval(() => {
+                const nextIndex = (currentCardIndex + 1) % moleculeCards.length;
+                showCard(nextIndex);
+            }, 5000);
+        }
+
+        function resetAutoCardChange() {
+            clearInterval(cardChangeInterval);
+            startAutoCardChange();
+        }
+
+        function switchCamera() {
+            cameraAngle = (cameraAngle + 1) % 4;
+            
+            const animations = [
+                { position: [0, 15, 25], target: [0, 0, 0] },      // Default
+                { position: [0, 40, 0], target: [0, 0, 0] },       // Top view
+                { position: [35, 15, 0], target: [0, 0, 0] },      // Side view
+                { position: [5, 8, 12], target: [0, 0, 0] }        // Close-up
+            ];
+            
+            const targetAnimation = animations[cameraAngle];
+            animateCameraTo(targetAnimation.position, targetAnimation.target);
+        }
+
+        function animateCameraTo(targetPosition, targetLookAt) {
+            const startPosition = camera.position.clone();
+            const endPosition = new THREE.Vector3(...targetPosition);
+            let progress = 0;
+            
+            const animateCamera = () => {
+                progress += 0.02;
+                if (progress >= 1) {
+                    camera.position.copy(endPosition);
+                    controls.target.set(...targetLookAt);
+                    controls.update();
+                    return;
+                }
+                
+                camera.position.lerpVectors(startPosition, endPosition, progress);
+                controls.target.lerp(new THREE.Vector3(...targetLookAt), progress);
+                controls.update();
+                
+                requestAnimationFrame(animateCamera);
+            };
+            
+            animateCamera();
+        }
+
+        function toggleMoleculeDetail() {
+            const detailPanel = document.getElementById('molecule-detail');
+            if (selectedMolecule) {
+                detailPanel.style.display = detailPanel.style.display === 'none' ? 'block' : 'none';
+            } else {
+                alert('Lütfen önce bir molekül seçin!');
+            }
+        }
+
+        function updateMoleculeDetail(molecule) {
+            const data = molecule.userData.data;
+            const detailPanel = document.getElementById('molecule-detail');
+            
+            document.getElementById('detail-title').textContent = data.name;
+            document.getElementById('detail-formula').textContent = data.formula;
+            document.getElementById('detail-description').textContent = data.description;
+            
+            const atomCounts = {};
+            data.atoms.forEach(atom => {
+                atomCounts[atom.element] = (atomCounts[atom.element] || 0) + 1;
+            });
+            
+            document.getElementById('detail-atoms').innerHTML = 
+                Object.entries(atomCounts)
+                    .map(([element, count]) => `<span style="color: #${atomColors[element].toString(16).padStart(6, '0')};">${element}: ${count}</span>`)
+                    .join(', ');
+            
+            detailPanel.style.display = 'block';
+        }
+
+        function startPhaseAnimation() {
+            if (!isAnimating) return;
+            
+            // Show visual hint for current phase
+            const explanation = phaseExplanations[currentPhase];
+            if (explanation) {
+                setTimeout(() => {
+                    showVisualHint(explanation.hint, window.innerWidth / 2, 100);
+                }, 1000);
+            }
+            
+            switch(currentPhase) {
+                case 0: startLightAbsorption(); break;
+                case 1: startWaterSplitting(); break;
+                case 2: startElectronTransport(); break;
+                case 3: startATPSynthesis(); break;
+                case 4: startCalvinCycle(); break;
+            }
+        }
+
+        function startLightAbsorption() {
+            if (!isAnimating) return;
+            
+            // Create realistic photons
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    if (isAnimating) createPhoton();
+                }, i * 600);
+            }
+            
+            // Animate chlorophyll molecules
+            const chlorophyllMolecules = molecules.filter(m => m.userData.type === 'chlorophyll');
+            chlorophyllMolecules.forEach(mol => {
+                mol.children.forEach(child => {
+                    if (child.material && child.material.emissive) {
+                        child.material.emissive.setHex(0x004400);
+                    }
+                });
+            });
+            
+            setTimeout(() => {
+                if (isAnimating) startLightAbsorption();
+            }, 3000);
+        }
+
+        function startWaterSplitting() {
+            const waterMolecules = molecules.filter(m => m.userData.type === 'water');
+            
+            waterMolecules.forEach((water, index) => {
+                setTimeout(() => {
+                    if (isAnimating) {
+                        // Animate water molecule vibration
+                        const originalScale = water.scale.clone();
+                        water.scale.multiplyScalar(1.3);
+                        
+                        setTimeout(() => {
+                            water.scale.copy(originalScale);
+                            energyLevel += 15;
+                        }, 800);
+                    }
+                }, index * 1000);
+            });
+            
+            setTimeout(() => {
+                if (isAnimating) startWaterSplitting();
+            }, 4000);
+        }
+
+        function startElectronTransport() {
+            // Create electron particles
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    if (isAnimating) createElectron();
+                }, i * 800);
+            }
+            
+            setTimeout(() => {
+                if (isAnimating) startElectronTransport();
+            }, 2500);
+        }
+
+        function startATPSynthesis() {
+            const atpMolecules = molecules.filter(m => m.userData.type === 'atp');
+            
+            atpMolecules.forEach((atp, index) => {
+                setTimeout(() => {
+                    if (isAnimating) {
+                        // Rotate ATP molecule
+                        atp.rotation.y += Math.PI;
+                        atpCount++;
+                        energyLevel += 8;
+                        
+                        // Glow effect
+                        atp.children.forEach(child => {
+                            if (child.material && child.material.emissive) {
+                                child.material.emissive.setHex(0x333300);
+                                setTimeout(() => {
+                                    child.material.emissive.setHex(0x111100);
+                                }, 1000);
+                            }
+                        });
+                    }
+                }, index * 700);
+            });
+            
+            setTimeout(() => {
+                if (isAnimating) startATPSynthesis();
+            }, 3500);
+        }
+
+        function startCalvinCycle() {
+            const co2Molecules = molecules.filter(m => m.userData.type === 'co2');
+            const glucoseMolecules = molecules.filter(m => m.userData.type === 'glucose');
+            
+            co2Molecules.forEach((co2, index) => {
+                setTimeout(() => {
+                    if (isAnimating && glucoseMolecules[0]) {
+                        // Move CO2 towards glucose
+                        const targetPos = glucoseMolecules[0].position.clone();
+                        const startPos = co2.position.clone();
+                        
+                        let progress = 0;
+                        const moveInterval = setInterval(() => {
+                            progress += 0.03;
+                            if (progress >= 1) {
+                                clearInterval(moveInterval);
+                                energyLevel += 20;
+                                return;
+                            }
+                            co2.position.lerpVectors(startPos, targetPos, progress);
+                        }, 16);
+                    }
+                }, index * 1200);
+            });
+            
+            setTimeout(() => {
+                if (isAnimating) startCalvinCycle();
+            }, 5000);
+        }
+
+        function createPhoton() {
+            const photonGeometry = new THREE.SphereGeometry(0.3, 12, 12);
+            const photonMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffff00,
+                emissive: 0xffff00,
+                emissiveIntensity: 0.8
+            });
+
+            const photon = new THREE.Mesh(photonGeometry, photonMaterial);
+            photon.position.set(
+                (Math.random() - 0.5) * 30,
+                30,
+                (Math.random() - 0.5) * 30
+            );
+            
+            // Add glow effect
+            const glowGeometry = new THREE.SphereGeometry(0.6, 8, 8);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffff00,
+                transparent: true,
+                opacity: 0.3
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            photon.add(glow);
+            
+            photon.userData = {
+                velocity: new THREE.Vector3(0, -0.8, 0),
+                life: 120
+            };
+
+            scene.add(photon);
+            photons.push(photon);
+        }
+
+        function createElectron() {
+            const electronGeometry = new THREE.SphereGeometry(0.15, 8, 8);
+            const electronMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                emissive: 0x006666,
+                emissiveIntensity: 1
+            });
+
+            const electron = new THREE.Mesh(electronGeometry, electronMaterial);
+            electron.position.set(0, 0, 0);
+            
+            electron.userData = {
+                angle: 0,
+                radius: 8,
+                speed: 0.15,
+                center: new THREE.Vector3(0, 0, 0)
+            };
+
+            scene.add(electron);
+            electrons.push(electron);
+        }
+
+        function onMouseMove(event) {
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(molecules, true);
+            const tooltip = document.getElementById('moleculeTooltip');
+            
+            if (intersects.length > 0) {
+                const molecule = intersects[0].object.parent;
+                const data = molecule.userData.data;
+                
+                if (data) {
+                    tooltip.innerHTML = `<strong>${data.name}</strong><br>${data.formula}`;
+                    tooltip.style.left = event.clientX + 'px';
+                    tooltip.style.top = event.clientY + 'px';
+                    tooltip.classList.add('show');
+                    
+                    document.getElementById('active-molecule').textContent = data.name;
+                    document.getElementById('molecule-type').textContent = data.formula;
+                    document.getElementById('atom-count').textContent = data.atoms.length;
+                }
+            } else {
+                tooltip.classList.remove('show');
+                document.getElementById('active-molecule').textContent = '-';
+                document.getElementById('molecule-type').textContent = '-';
+                document.getElementById('atom-count').textContent = '-';
+            }
+        }
+
+        function onMouseClick(event) {
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(molecules, true);
+            
+            if (intersects.length > 0) {
+                selectedMolecule = intersects[0].object.parent;
+                updateMoleculeDetail(selectedMolecule);
+                
+                // Highlight selected molecule
+                molecules.forEach(mol => {
+                    mol.children.forEach(child => {
+                        if (child.material && child.material.emissive) {
+                            child.material.emissive.setHex(0x000000);
+                        }
+                    });
+                });
+                
+                selectedMolecule.children.forEach(child => {
+                    if (child.material && child.material.emissive) {
+                        child.material.emissive.setHex(0x222200);
+                    }
+                });
+            }
+        }
+
+        function updatePhaseInfo() {
+            document.getElementById('current-phase').textContent = phases[currentPhase];
+            document.getElementById('phaseIndicator').textContent = `📍 ${phases[currentPhase]} Fazı`;
+            document.getElementById('energy-level').textContent = Math.floor(energyLevel) + '%';
+            document.getElementById('atp-count').textContent = atpCount + ' ATP';
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isAnimating) {
+                // Animate molecules with realistic molecular motion
+                molecules.forEach(molecule => {
+                    // Brownian motion simulation
+                    molecule.position.add(molecule.userData.velocity);
+                    
+                    // Random rotational motion
+                    molecule.rotation.x += (Math.random() - 0.5) * 0.02;
+                    molecule.rotation.y += (Math.random() - 0.5) * 0.02;
+                    molecule.rotation.z += (Math.random() - 0.5) * 0.01;
+                    
+                    // Boundary constraints
+                    if (Math.abs(molecule.position.x) > 25) molecule.userData.velocity.x *= -1;
+                    if (Math.abs(molecule.position.y) > 20) molecule.userData.velocity.y *= -1;
+                    if (Math.abs(molecule.position.z) > 25) molecule.userData.velocity.z *= -1;
+                    
+                    // Add some random velocity changes (thermal motion)
+                    molecule.userData.velocity.add(new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.001,
+                        (Math.random() - 0.5) * 0.001,
+                        (Math.random() - 0.5) * 0.001
+                    ));
+                    
+                    // Limit maximum velocity
+                    if (molecule.userData.velocity.length() > 0.2) {
+                        molecule.userData.velocity.normalize().multiplyScalar(0.2);
+                    }
+                });
+
+                // Animate photons
+                photons.forEach((photon, index) => {
+                    photon.position.add(photon.userData.velocity);
+                    photon.rotation.x += 0.1;
+                    photon.rotation.y += 0.15;
+                    photon.userData.life--;
+                    
+                    // Check collision with chloroplast
+                    if (photon.position.distanceTo(chloroplast.position) < 10) {
+                        energyLevel += 3;
+                        scene.remove(photon);
+                        photons.splice(index, 1);
+                    } else if (photon.userData.life <= 0 || photon.position.y < -30) {
+                        scene.remove(photon);
+                        photons.splice(index, 1);
+                    }
+                });
+
+                // Animate electrons
+                electrons.forEach((electron, index) => {
+                    electron.userData.angle += electron.userData.speed;
+                    const x = Math.cos(electron.userData.angle) * electron.userData.radius;
+                    const z = Math.sin(electron.userData.angle) * electron.userData.radius;
+                    electron.position.set(x, 2, z);
+                    
+                    if (electron.userData.angle > Math.PI * 6) {
+                        scene.remove(electron);
+                        electrons.splice(index, 1);
+                    }
+                });
+
+                // Animate chloroplast
+                if (chloroplast) {
+                    chloroplast.rotation.y += 0.002;
+                }
+
+                // Energy decay
+                energyLevel = Math.max(0, energyLevel - 0.05);
+            }
+
+            controls.update();
+            updatePhaseInfo();
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
